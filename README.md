@@ -82,7 +82,13 @@ The model performs very well in terms of precision and recall, indicating it is 
 
 The high accuracy and low misclassification rate reflect overall strong performance. However, given the class imbalance (where fraudulent transactions are rare), precision and recall are more critical metrics for evaluating the model's effectiveness in fraud detection.
 
-The confusion matrix for the Logistic Regression model in fraud detection provides that True Negatives (Non-Fraudulent correctly identified): 9923 transactions were correctly classified as non-fraudulent, False Positives (Non-Fraudulent incorrectly identified as fraudulent): 155 non-fraudulent transactions were mistakenly classified as fraudulent, False Negatives (Fraudulent incorrectly identified as non-fraudulent): 261 fraudulent transactions were incorrectly classified as non-fraudulent and True Positives (Fraudulent correctly identified): 9856 fraudulent transactions were correctly classified as fraudulent.
+The confusion matrix for the Logistic Regression model in fraud detection provides that True Negatives (Non-Fraudulent correctly identified): 9923 transactions were correctly classified as non-fraudulent, 
+
+False Positives (Non-Fraudulent incorrectly identified as fraudulent): 155 non-fraudulent transactions were mistakenly classified as fraudulent, 
+
+False Negatives (Fraudulent incorrectly identified as non-fraudulent): 261 fraudulent transactions were incorrectly classified as non-fraudulent and 
+
+True Positives (Fraudulent correctly identified): 9856 fraudulent transactions were correctly classified as fraudulent.
 
 This proves that the model has a strong ability to detect both fraudulent and non-fraudulent transactions, but there are still some misclassifications, particularly with fraudulent transactions being missed (false negatives).
 
