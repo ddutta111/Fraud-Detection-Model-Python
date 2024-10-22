@@ -428,7 +428,7 @@ Both models exhibit excellent performance, with Random Forest slightly outperfor
 - Monitor the most influential feature, V4, for anomalies.
 - Continuously update models with new data to adapt to evolving fraud patterns.
 
-(Note: Please Check teh Google Colab notebook for detailed explanation and graphs of the project.)
+(Note: Please Check the Google Colab notebook for detailed explanation and graphs of the project.)
 
 # Author
 
