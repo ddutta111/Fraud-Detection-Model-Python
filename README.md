@@ -24,6 +24,7 @@ Note: The dataset contains anonymized numerical features due to confidentiality,
 # **Project Steps**
 
 1. Import Necessary Libraries
+   
 Import libraries such as pandas, numpy, scikit-learn, matplotlib, seaborn, and imbalanced-learn for data manipulation, visualization, and modeling.
 ```python
 # Data Manipulation Libraries
@@ -52,6 +53,7 @@ from imblearn.over_sampling import SMOTE  # For oversampling minority class to h
 from sklearn.impute import SimpleImputer  # For handling missing values in the dataset
 ```     
 2. Exploratory Data Analysis (EDA)
+   
 Data Summary: Check the dataset's summary and class distribution:
 - Total Transactions: 51,590
 - Fraudulent Transactions (Class = 1): 150
@@ -264,6 +266,7 @@ plt.legend()
 plt.show()
 ```
 8. Feature Importance
+   
 Extract and compare feature importance from both models (LR and RF) to identify key drivers of fraud detection.
 
 > LR Model Feature Importance & Visualization
