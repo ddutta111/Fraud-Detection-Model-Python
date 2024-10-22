@@ -25,7 +25,32 @@ Note: The dataset contains anonymized numerical features due to confidentiality,
 
 1. Import Necessary Libraries
 Import libraries such as pandas, numpy, scikit-learn, matplotlib, seaborn, and imbalanced-learn for data manipulation, visualization, and modeling.
+```python
+# Data Manipulation Libraries
+import pandas as pd  # For data manipulation and analysis
+import numpy as np   # For numerical operations
 
+# Data Visualization Libraries
+import matplotlib.pyplot as plt  # For creating static visualizations
+import seaborn as sns           # For enhanced data visualization
+
+# Machine Learning Libraries
+from sklearn.model_selection import train_test_split  # For splitting data into training and test sets
+from sklearn.preprocessing import StandardScaler       # For feature scaling to standardize the dataset
+from sklearn.ensemble import RandomForestClassifier     # For implementing the Random Forest Classifier
+from sklearn.model_selection import cross_val_score, KFold  # For cross-validation and model evaluation
+from sklearn.linear_model import LogisticRegression     # For implementing the Logistic Regression model
+from sklearn.metrics import (classification_report, confusion_matrix,
+                             roc_auc_score, roc_curve,
+                             precision_score, recall_score,
+                             accuracy_score)  # For model evaluation metrics
+
+# Handling Imbalanced Datasets
+from imblearn.over_sampling import SMOTE  # For oversampling minority class to handle class imbalance
+
+# Data Cleaning and Imputation
+from sklearn.impute import SimpleImputer  # For handling missing values in the dataset
+```     
 2. Exploratory Data Analysis (EDA)
 Data Summary: Check the dataset's summary and class distribution:
 - Total Transactions: 51,590
@@ -35,15 +60,61 @@ Data Summary: Check the dataset's summary and class distribution:
 - The average transaction amount is $94, with significant variability.
 - The Time feature shows low correlations with other features, indicating minimal impact on fraud detection.
 - Correlation Matrix: Visualize relationships between features to identify anomalies.
+```python
+# Step 2: Load the dataset
+dataset = pd.read_csv('creditcard.csv')
 
+# Step 3: Initial Data Exploration
+print(dataset.info())  # Check data types and null values
+print(dataset.describe())  # Summary statistics
+print(dataset['Class'].value_counts())  # Check imbalance in the target variable
+```  
 3. Data Preprocessing
-   
+ ```python  
 - Handle Missing Values: Impute or remove missing values.
 - Address Class Imbalance: Use techniques like oversampling, undersampling, or SMOTE.
 - Standardization: Scale the features for better model performance.
 - Split Dataset: Divide the dataset into training and testing sets.
-  
-5. Model Selection and Evaluation
+  # Define the list of features to include in the correlation matrix
+features_to_include = ['V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10',
+                       'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17', 'V18', 'V19', 'V20',
+                       'V21', 'V22', 'V23', 'V24', 'V25', 'V26', 'V27', 'V28', 'Amount', 'Time']
+
+# Select only the columns of interest
+subset = dataset_imputed[features_to_include]
+
+# Calculate the correlation matrix
+corr_matrix = subset.corr()
+
+# Plot the heatmap
+plt.figure(figsize=(12, 10))
+sns.heatmap(corr_matrix, cmap='coolwarm', annot=True, fmt=".2f", linewidths=0.5)
+plt.title("Correlation Matrix of Selected Features")
+plt.show()
+# Convert hyphens to NaN
+dataset.replace('-', np.nan, inplace=True)
+
+# Now impute the missing values with median
+imputer = SimpleImputer(strategy='median')
+dataset_imputed = pd.DataFrame(imputer.fit_transform(dataset), columns=dataset.columns) 
+
+#Seperating the independnet features V1 to V28, 'Amount', 'Time' and the dependent variable 'class'
+X = dataset_imputed.drop(columns=['Class'])
+y = dataset_imputed['Class']
+
+# Standardizing the 'Amount' and 'Time' columns
+scaler = StandardScaler()
+X[['Amount', 'Time']] = scaler.fit_transform(X[['Amount', 'Time']])
+
+# Handling Imbalance using SMOTE (Synthetic Minority Over-sampling Technique)
+smote = SMOTE(sampling_strategy='minority', random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X, y)
+
+#Splitting the datset into training and test set for model training & validations
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.3, random_state=42)
+```      
+     
+5. Logistics Regression Model Training and K-Fold Cross-Validation
    
 Logistic Regression (LR): 
 -Simple and interpretable for binary classification
@@ -54,17 +125,207 @@ Logistic Regression (LR):
 Random Forest Classifier:
 - Robust and effective for complex datasets.
 - Reduces overfitting through ensemble learning.
-  
-5. Model Evaluation
+ ```python   
+# Define the Logistic Regression model
+lr_model = LogisticRegression(max_iter=1000, random_state=42)
 
-Metrics: Evaluate models using Precision, Recall, Accuracy, and AUC curve.
+# Set up K-Fold Cross-Validation with 5 folds
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
-6. Feature Importance Analysis
+# Perform K-Fold Cross-Validation and get accuracy scores for each fold
+cv_scores = cross_val_score(lr_model, X_train, y_train, cv=kf, scoring='accuracy')
+     
+# Calculate the average accuracy across the folds
+average_cv_accuracy = cv_scores.mean()
+
+# Print the cross-validation accuracy for each fold and the average accuracy
+print(f"K-Fold Cross-Validation Accuracy Scores: {cv_scores}")
+print(f"Average Cross-Validation Accuracy: {average_cv_accuracy:.4f}")
+
+# Train the Logistic Regression model on the full training set
+lr_model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred_lr = lr_model.predict(X_test)
+y_pred_prob_lr = lr_model.predict_proba(X_test)[:, 1]
+
+lr_precision = precision_score(y_test, y_pred_lr)
+lr_recall = recall_score(y_test, y_pred_lr)
+lr_accuracy = accuracy_score(y_test, y_pred_lr)
+
+# Misclassification rate
+misclassification_rate_lr = 1 - lr_accuracy
+
+# Print the results
+print(f"LR model has a precision score of: {lr_precision}")
+print(f"LR Model has  recall score of: {lr_recall}")
+print(f"\nLR model has an Accuracy on Test Set: {lr_accuracy:.4f}")
+print("LR model has a misclassifcation rate of:", misclassification_rate_lr*100, "%")
+```      
+
+5. Visualization of Confusion Matrix and Classification Report for Logistic Regression Model
+
+- ROC Curve: Visualize the performance of models.
+- Confusion Matrix: Display true positives, true negatives, false positives, and false negatives.
+```python 
+print("\nLogistic Regression Classification Report")
+print(classification_report(y_test, y_pred_lr))
+print("Confusion Matrix (Logistic Regression)")
+cm = confusion_matrix(y_test, y_pred_lr)
+print(cm)
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Non-Fraudulent', 'Fraudulent'], yticklabels=['Non-Fraudulent', 'Fraudulent'])
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.title('Confusion Matrix LR Model')
+plt.show()
+
+# Logistic Regression ROC-AUC
+lr_roc_auc = roc_auc_score(y_test, y_pred_prob_lr)
+fpr_lr, tpr_lr, _ = roc_curve(y_test, y_pred_prob_lr)
+
+plt.figure(figsize=(8, 6))
+plt.plot(fpr_lr, tpr_lr, label=f'Logistic Regression (AUC = {lr_roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier (AUC = 0.50)')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve - Logistic Regression')
+plt.legend(loc='lower right')
+plt.show()
+``` 
+
+6. Random Forest Classifier Model Training, Evaluation & Visualizations
+```python 
+# Step 8: Model Training - Random Forest
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
+rf_model.fit(X_train, y_train)
+#Prediction on Test set
+y_pred_rf = rf_model.predict(X_test)
+y_pred_prob_rf = rf_model.predict_proba(X_test)[:, 1]
+
+# Calculate Precision, Recall, and Accuracy for Random Forest
+rf_precision = precision_score(y_test, y_pred_rf)
+rf_recall = recall_score(y_test, y_pred_rf)
+rf_accuracy = accuracy_score(y_test, y_pred_rf)
+
+# Calculate misclassification rate
+misclassification_rate_rf = 1 - rf_accuracy
+
+# Print the results
+print(f"Random Forest Classifier - Precision: {rf_precision}")
+print(f"Random Forest Classifier - Recall: {rf_recall}")
+print(f"Random Forest Classifier - Accuracy: {rf_accuracy}")
+print("RF model has a misclassifcation rate of:", misclassification_rate_rf*100, "%")
+
+print("Random Forest Classification Report")
+print(classification_report(y_test, y_pred_rf))
+print("Confusion Matrix (Random Forest)")
+cm_rf = confusion_matrix(y_test, y_pred_rf)
+print(cm_rf)
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm_rf, annot=True, fmt='d', cmap='Blues', xticklabels=['Non-Fraudulent', 'Fraudulent'], yticklabels=['Non-Fraudulent', 'Fraudulent'])
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.title('Confusion Matrix Random Forest Classifier')
+plt.show()
+
+# Random Forest ROC-AUC
+rf_roc_auc = roc_auc_score(y_test, y_pred_prob_rf)
+fpr_rf, tpr_rf, _ = roc_curve(y_test, y_pred_prob_rf)
+
+plt.figure(figsize=(8, 6))
+plt.plot(fpr_rf, tpr_rf, label=f'Random Forest (AUC = {rf_roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier (AUC = 0.50)')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve - Random Forest')
+plt.legend(loc='lower right')
+plt.show()
+```
+
+7. ROC-AUC Curve comparison for both models Visually
+```python 
+rf_roc_auc = roc_auc_score(y_test, y_pred_prob_rf)
+lr_roc_auc = roc_auc_score(y_test, y_pred_prob_lr)
+
+fpr_rf, tpr_rf, _ = roc_curve(y_test, y_pred_prob_rf)
+fpr_lr, tpr_lr, _ = roc_curve(y_test, y_pred_prob_lr)
+
+plt.figure(figsize=(10, 6))
+plt.plot(fpr_rf, tpr_rf, label=f'Random Forest (AUC = {rf_roc_auc:.2f})')
+plt.plot(fpr_lr, tpr_lr, label=f'Logistic Regression (AUC = {lr_roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier (AUC = 0.50)')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve')
+plt.legend()
+plt.show()
+```
+8. Feature Importance
 Extract and compare feature importance from both models (LR and RF) to identify key drivers of fraud detection.
 
-7. Visualization
-ROC Curve: Visualize the performance of models.
-Confusion Matrix: Display true positives, true negatives, false positives, and false negatives.
+> LR Model Feature Importance & Visualization
+```python 
+# Access the coefficients from Logistic Regression
+lr_coefficients = lr_model.coef_[0]
+
+# Get the feature names from your dataset
+feature_names = X_train.columns
+
+# Print feature names and their coefficients from Logistic Regression
+print("\nLogistic Regression Feature Coefficients:")
+for feature_name, coefficient in zip(feature_names, lr_coefficients):
+    print(f"Feature {feature_name}: Coefficient = {coefficient:.4f}")
+
+# Accessing Feature Importances for Logistic Regression (using absolute coefficients)
+lr_coefficients = np.abs(lr_model.coef_[0])  # Coefficients for Logistic Regression
+
+# Create a DataFrame for Logistic Regression feature importances
+lr_importances_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Importance': lr_coefficients
+})
+
+# Sort by importance and get the top 5 features for Logistic Regression
+top_lr_features = lr_importances_df.sort_values(by='Importance', ascending=False).head(5)
+print("\nTop 5 Features from Logistic Regression:")
+print(top_lr_features)
+
+#Plotting Top 5 Feature Importance/Significant co-efficients for LR model
+plt.figure(figsize=(10, 6))
+plt.barh(top_lr_features['Feature'], top_lr_features['Importance'], color='skyblue')
+plt.xlabel('Feature Importance')
+plt.ylabel('Feature')
+plt.title('Top 5 Features Importance from Logistic Regression')
+plt.gca().invert_yaxis()  # To display the highest importance at the top
+plt.show()
+```
+> RandomForest Classifier Features Importance & Visualization
+```python
+# Access the feature importances from Random Forest
+rf_feature_importances = rf_model.feature_importances_
+
+# Get the feature names from your dataset
+feature_names = X_train.columns
+
+# Print feature names and their importances from Random Forest
+print("Random Forest Feature Importances:")
+for feature_name, importance in zip(feature_names, rf_feature_importances):
+    print(f"Feature {feature_name}: Importance = {importance:.4f}")
+
+# Create a DataFrame for Random Forest feature importances
+rf_importances_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Importance': rf_feature_importances
+})
+
+# Sort by importance and get the top 5 features for Random Forest
+top_rf_features = rf_importances_df.sort_values(by='Importance', ascending=False).head(5)
+print("Top 5 Features from Random Forest:")
+print(top_rf_features)
+```
 
 # **Results Summary & Findings**
 
@@ -166,6 +427,8 @@ Both models exhibit excellent performance, with Random Forest slightly outperfor
 - Implement the Random Forest model for fraud detection due to its superior performance.
 - Monitor the most influential feature, V4, for anomalies.
 - Continuously update models with new data to adapt to evolving fraud patterns.
+
+(Note: Please Check teh Google Colab notebook for detailed explanation and graphs of the project.)
 
 # Author
 
