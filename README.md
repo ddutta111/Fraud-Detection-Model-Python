@@ -11,13 +11,13 @@ The goal of this project is to accurately detect fraudulent credit card transact
 
 **Features:**
 
-- V1 to V28: Principal components derived from PCA transformation (confidential)
+- ```V1 to V28:``` Principal components derived from PCA transformation (confidential)
 
-- Time: Seconds elapsed between each transaction and the first transaction
+- ```Time:``` Seconds elapsed between each transaction and the first transaction
 
-- Amount: Transaction amount, relevant for cost-sensitive learning
+- ```Amount:``` Transaction amount, relevant for cost-sensitive learning
 
-- Class: Response variable (1 for fraud, 0 for non-fraud) - Dependent Variable
+- ```Class:``` Response variable (1 for fraud, 0 for non-fraud) - Dependent Variable
 
 Note: The dataset contains anonymized numerical features due to confidentiality, with the majority of features being the result of a PCA transformation.
 
